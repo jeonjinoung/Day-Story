@@ -1,27 +1,12 @@
 const fs = require('fs')
 const merkle = require('merkle')
 const cryptoJs = require('crypto-js')
+const { type } = require('os')
 const {Block, BlockHeader} = require("./blockclass")
 const {getVersion, getCurrentTime} = require('../utils/isValidBlock')
 const {createHash} = require('../utils/hash')
 //////////////////////////////////////////////////////////
-//block의 클라스를 정해주고 정의해줄거임
-// const block = {
-//     magicNumber : "0xD821E2",
-//     BlockSize : "4mb",
-//     header:{
-//         //블록에대한 정보를 헤더에 담는다.
-//         version : "1.0.0",
-//         HashPrevBlock : 00000000, // 없으면 내가 최상의 노드(제네시스 코딩은 하드코딩으로 만드는 것)
-//         timeStamp : "1970년 1월 1일", //유닉스 기준일 1970 1월 1일
-//         HashMerkleRoot : "SHA256", // 암호화된 값이 들어감
-//         bits:"작업증명 난이도 정하는",
-//         Nonce: `넌스`  //임의로 생성되는 암호화 토큰으로 재생 공격을 방지하는데 사용
-//     },
-//     body : ["hello genesisBlockChain"]
-// }
-// console.log(block)
-////////////////////////////////////////////////////////////////
+
 
 //최초의 블록을 만들때 사용하는 함수
 function createGenesisBlock(){
@@ -32,31 +17,10 @@ function createGenesisBlock(){
     const body = ['hello block'] 
     const merkleTree = merkle('sha256').sync(body) // 바디안에 값을 해쉬값을 통해 변환시켜주는 함수
     const merkleRoot = merkleTree.root() || '0'.repeat(64)
-
+    
     const header = new BlockHeader(version, index, previousHash, timestamp, merkleRoot)
     //해더안에 새로운블록해더 구조체안의 양식 버ㅈ
     return new Block(header,body)
-}
-
-//최초의 블럭을 BBLOCK이라고 선언
-// const BBLOCK = createGenesisBlock()
-// console.log('completed', BBLOCK)
-
-let Blocks = [createGenesisBlock()]
-
-addBlock(['hello1'])
-addBlock(['hello2'])
-addBlock(['hello3'])
-
-//이함수는 단순히 push용도다 예를들어 하나씩 푸쉬되면 인덱스가 늘어나는 느낌
-function addBlock(data){
-    const newBlock = nextBlock(data);
-    Blocks.push(newBlock)
-}    
-
-
-function getLastBlock() {
-    return Blocks[Blocks. length - 1]
 }
 
 //다음 블럭의 header와 body를 만들어주는 함수
@@ -72,8 +36,101 @@ function nextBlock(data) {
     const newBlockHeader = new BlockHeader(version, index, previousHash, timestamp, merkleRoot);
     console.log(new Block(newBlockHeader,data))
     return new Block(newBlockHeader, data)
-
 }
+
+
+////////////////////////////////////////////////////////////////
+
+//최초의 블럭을 BBLOCK이라고 선언
+const BBLOCK = createGenesisBlock()
+console.log('completed', BBLOCK)
+
+function getLastBlock() {
+    return Blocks[Blocks. length - 1]
+}
+
+
+//이함수는 단순히 push용도다 예를들어 하나씩 푸쉬되면 인덱스가 늘어나는 느낌
+function addBlock(data){
+    // new header 만들어서 => new block(header, body) 
+    const newBlock = nextBlock(data);
+    if(isValidNewBlock(newBlock, getLastBlock())){
+        Blocks.push(newBlock)
+        return true;
+    }
+    return false;
+}    
+
+function isValidType(block){
+    return (
+        typeof(block.header.version)=="string" &&     // string
+        typeof(block.header.index)=="number" &&         // number
+        typeof(block.header.previousHash)=="string" &&  // string
+        typeof(block.header.timestamp)=="number" &&          // number 
+        typeof(block.header.merkleRoot)=="string" &&    // string
+        typeof(block.body)=="object"                 // object 
+    )
+}
+
+function isValidNewBlock(currentBlock, previousBlock){
+    // type검사 : 변수 안의 값이 String or Object or Number etc.등등인지 
+    // 숫자가 들어가면 문제가 생김 // index가 number맞는지 
+    if(!isValidType(currentBlock)){
+        console.log(`inValidType(currentBlock)=false ${JSON.stringify(currentBlock)}`)
+        return false;  // 함수 종료 
+    }
+    if(previousBlock.header.index +1 !== currentBlock.header.index){
+        console.log(`invalid index입니다. `)
+        return false;
+    }
+    if(createHash(previousBlock) !== currentBlock.header.previousHash){
+        console.log(`invalid previousHash입니다.`);
+        return false;
+    }
+    if(currentBlock.header.merkleRoot !== merkle('sha256').sync(currentBlock.body).root() || currentBlock.body.length === 0 ){
+        console.log(`invalid body 입니다. (body 내용이 없거나 )`)
+        return false;
+    }
+
+    return true;
+}
+
+
+function isValidBlocks(Blocks){
+    
+    // 1. 제네시스 블록 검사 - 유효한지, 데이터가 바뀐 적이 없는지 
+    // 제네시스 블록은 하드코딩으로 만들어짐 
+
+    // 아래 비교 대상 모두 return 값이 객체임
+    // JS는 {} === {} => always FALSE !!! 
+    // string으로 바꿔서 비교 ㄱㄱ 
+    if(JSON.stringify(Blocks[0]) !== JSON.stringify(createGenesisBlock())){
+        console.log(`Invalid Genesis block입니다. `)
+        return false;
+    }
+
+    // 2. 배열 요소 하나하나 검사 
+    // Blocks[0] = 이미 검증이 위에서 끝난 제네시스 블록 
+    let tempBlocks = [Blocks[0]]
+    // 첫 번째 (제네시스) 블록을 빼고 for문 돌리기 
+    for(let i=1; i<Blocks.length; i++){
+        if(isValidNewBlock(Blocks[i], tempBlocks[i-1])){
+            tempBlocks.push(Blocks[i]);
+        }else{
+            return false;
+        }
+    }
+
+    return true;
+}
+ 
+
+let Blocks = [createGenesisBlock()]
+
+console.log(444444444444444)
+addBlock(['hello1'])
+addBlock(['hello2'])
+console.log(444444444444444)
 
 
 /*
