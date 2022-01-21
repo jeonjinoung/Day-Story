@@ -45,6 +45,10 @@ function nextBlock(data) {
 const BBLOCK = createGenesisBlock()
 console.log('completed', BBLOCK)
 
+function getBlocks(){
+    return Blocks;
+}
+
 function getLastBlock() {
     return Blocks[Blocks. length - 1]
 }
@@ -60,17 +64,6 @@ function addBlock(data){
     }
     return false;
 }    
-
-function isValidType(block){
-    return (
-        typeof(block.header.version)=="string" &&     // string
-        typeof(block.header.index)=="number" &&         // number
-        typeof(block.header.previousHash)=="string" &&  // string
-        typeof(block.header.timestamp)=="number" &&          // number 
-        typeof(block.header.merkleRoot)=="string" &&    // string
-        typeof(block.body)=="object"                 // object 
-    )
-}
 
 function isValidNewBlock(currentBlock, previousBlock){
     // type검사 : 변수 안의 값이 String or Object or Number etc.등등인지 
@@ -95,6 +88,16 @@ function isValidNewBlock(currentBlock, previousBlock){
     return true;
 }
 
+function isValidType(block){
+    return (
+        typeof(block.header.version)=="string" &&     // string
+        typeof(block.header.index)=="number" &&         // number
+        typeof(block.header.previousHash)=="string" &&  // string
+        typeof(block.header.timestamp)=="number" &&          // number 
+        typeof(block.header.merkleRoot)=="string" &&    // string
+        typeof(block.body)=="object"                 // object 
+    )
+}
 
 function isValidBlocks(Blocks){
     
@@ -127,11 +130,7 @@ function isValidBlocks(Blocks){
 
 let Blocks = [createGenesisBlock()]
 
-console.log(444444444444444)
-addBlock(['hello1'])
-addBlock(['hello2'])
-console.log(444444444444444)
-
+module.exports = { Blocks, addBlock, getBlocks }
 
 /*
 블롴체인 개념 설명

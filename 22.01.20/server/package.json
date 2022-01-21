@@ -10,8 +10,11 @@
   "license": "ISC",
   "dependencies": {
     "crypto-js": "^4.1.1",
+    "express": "^4.17.2",
     "fs": "^0.0.1-security",
     "merkle": "^0.6.0",
-    "merkletreejs": "^0.2.27"
+    "merkletreejs": "^0.2.27",
+    "npm-updates": "^0.2.1",
+    "python": "0.0.4"
   }
 }
