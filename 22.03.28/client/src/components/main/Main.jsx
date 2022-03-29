@@ -15,28 +15,16 @@ import { Playlist } from "./mypage/playlist/Playlist";
 import { Collection } from "./mypage/collection/Collection";
 import { History } from "./mypage/history/History";
 
-import axios from "axios";
-
 export const Main = () => {
   const [address, setAddress] = useState("");
-  const [guest, setGuest] = useState("");
 
   async function init() {
     await Metamask.getAccounts(setAddress);
     await Metamask.walletListener(setAddress);
-    return address;
-  }
-
-  async function User() {
-    const url = "http://localhost:5000/users/signin";
-    const response = await axios.post(url, { address });
-    // console.log(response.data);
   }
 
   useEffect(() => {
-    const Useraddress = it();
-    console.log(Useraddress);
-    User();
+    init();
     const sidebarToggle = document.querySelector(".sidebar-toggle");
     const sidebar = document.querySelector("nav");
 
